@@ -84,7 +84,7 @@ $ ./install_docker-compse.sh
 $ cd database
 $ docker-compose up -d --build
 # 미리 생성해둔 데이터 베이스 스키마 적용하기
-$ docker exec -i main_master_db mysql -u root -pIz0ne!!!! friday < friday.sql
+$ docker exec -i main_master_db mysql -u dbmanager -piris friday < friday.sql
 ```
 
 ## 프로젝트 사용법 (Getting Started)
