@@ -87,7 +87,7 @@ IF you use wsl or codespace, checkout branch to wsl or codespace
 $ cd database
 $ docker-compose up -d --build
 # Load Database Scheme
-$ docker exec -i main_master_db mysql -u root -pIz0ne!!!! friday < friday.sql
+$ docker exec -i main_master_db mysql -u dbmanager -piris friday < friday.sql
 ```
 
 ## Getting Started

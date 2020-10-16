@@ -3,6 +3,8 @@ set time_zone='Asia/Seoul';
 create user 'slave_at_mm_sub'@'%' identified by 'Iz0ne!!!!';
 create user 'slave_at_ms'@'%' identified by 'Iz0ne!!!!';
 create user 'haproxy'@'172.20.1.2';
+create user 'dbmanager'@'%' identified by 'iris';
+GRANT ALL privileges on friday.* to 'dbmanager'@'%' with grant option;
 grant replication slave on *.* to 'slave_at_mm_sub'@'%' with grant option;
 grant replication slave on *.* to 'slave_at_ms'@'%' with grant option;
 GRANT USAGE,REPLICATION CLIENT,PROCESS,SHOW DATABASES,SHOW VIEW ON *.* TO 'haproxy'@'172.20.1.2';
