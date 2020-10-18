@@ -4,7 +4,7 @@
 CREATE TABLE date_mealtime_mapping
 (
     `id`           INT UNSIGNED                                    NOT NULL    AUTO_INCREMENT COMMENT '인덱스', 
-    `korean_date`  DATE UNIQUE                             NOT NULL    COMMENT '날짜(20200101)', 
+    `korean_date`  DATE                            NOT NULL    COMMENT '날짜(20200101)', 
     `meal_time`    ENUM("breakfast", "lunch", "dinner")    NOT NULL    COMMENT '식사시간 ( 1~3 : 아침, 점심, 저녁 )', 
     PRIMARY KEY (id)
 );
@@ -129,7 +129,7 @@ ALTER TABLE daily_holiday_check
 
 
 # date_mealtime_mapping Table Create SQL
-CREATE TABLE daily_weather_jnfo
+CREATE TABLE daily_weather_info
 (
     `date_id`                  INT UNSIGNED                                     NOT NULL    COMMENT '날짜 인덱스', 
     `is_abnormal_temperature`  BIT                                              NOT NULL    COMMENT '이상 기온 여부', 
@@ -142,10 +142,10 @@ CREATE TABLE daily_weather_jnfo
     PRIMARY KEY (date_id)
 );
 
-ALTER TABLE daily_weather_jnfo COMMENT '일일 기상 정보';
+ALTER TABLE daily_weather_info COMMENT '일일 기상 정보';
 
-ALTER TABLE daily_weather_jnfo
-    ADD CONSTRAINT FK_daily_weather_jnfo_date_id_date_mealtime_mapping_id FOREIGN KEY (date_id)
+ALTER TABLE daily_weather_info
+    ADD CONSTRAINT FK_daily_weather_info_date_id_date_mealtime_mapping_id FOREIGN KEY (date_id)
         REFERENCES date_mealtime_mapping (id) ON DELETE RESTRICT ON UPDATE RESTRICT;
 
 
@@ -185,21 +185,20 @@ ALTER TABLE menu_info
 # date_mealtime_mapping Table Create SQL
 CREATE TABLE daily_eat_log
 (
-    `daily_headcount_id`  INT UNSIGNED    NOT NULL    COMMENT '날짜 인덱스', 
+    `date_id`  INT UNSIGNED    NOT NULL    COMMENT '날짜 인덱스', 
     `member_id`           INT UNSIGNED    NOT NULL    COMMENT '구성원 고유 번호 [ 예) 군번 / 순번 ]', 
-    PRIMARY KEY (daily_headcount_id)
+    PRIMARY KEY (date_id)
 );
 
 ALTER TABLE daily_eat_log COMMENT '구성원_실제식사 기록';
 
 ALTER TABLE daily_eat_log
-    ADD CONSTRAINT FK_daily_eat_log_member_id_accounts_member_id FOREIGN KEY (member_id)
-        REFERENCES accounts (member_id) ON DELETE RESTRICT ON UPDATE RESTRICT;
-
-ALTER TABLE daily_eat_log
-    ADD CONSTRAINT FK_daily_eat_log_daily_headcount_id_date_mealtime_mapping_id FOREIGN KEY (daily_headcount_id)
+    ADD CONSTRAINT FK_daily_eat_log_date_id_date_mealtime_mapping_id FOREIGN KEY (date_id)
         REFERENCES date_mealtime_mapping (id) ON DELETE RESTRICT ON UPDATE RESTRICT;
 
+ALTER TABLE daily_eat_log
+    ADD CONSTRAINT FK_daily_eat_log_member_id_group_member_info_id FOREIGN KEY (member_id)
+        REFERENCES group_member_info (id) ON DELETE RESTRICT ON UPDATE RESTRICT;
 
 # date_mealtime_mapping Table Create SQL
 CREATE TABLE predict_log
