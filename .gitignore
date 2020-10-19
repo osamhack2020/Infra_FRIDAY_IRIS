@@ -1,2 +1,2 @@
-dl_core/src/secret.py
+dl_core/src/dl_core/secret.py
 ngrok.exe
