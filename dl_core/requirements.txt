@@ -1,0 +1,15 @@
+numpy
+scipy
+requests
+beautifulsoup4
+xmltodict
+scikit-learn
+pymysql
+pandas
+uwsgi
+Flask
+flask_sqlalchemy
+mysqlclient
+Flask-Migrate
+flask_script
+cryptography

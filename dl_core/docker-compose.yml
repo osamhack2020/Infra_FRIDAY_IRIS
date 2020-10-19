@@ -1,0 +1,19 @@
+version: '3.8'
+services:
+  dl_core:
+    restart: always
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: dl_core
+    volumes:
+      - /d/test:/test
+    networks:
+      db_net:
+        ipv4_address: 172.20.1.234
+    ports:
+      - "8093:5000"
+networks:
+  db_net:
+    external:
+      name: database_db_net
