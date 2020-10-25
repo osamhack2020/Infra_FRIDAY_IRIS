@@ -45,6 +45,9 @@ This program consists of several  services that interact each other
 ### Database
 ![HA-Database-Infra](https://drive.google.com/uc?export=download&id=1C9Wra6ZUjt2nFJY5dSKY6zYqQoIZ_dBM)
 
+### [WEB] Attendance Check using QR
+[API docs](https://duckhoim.gitbook.io/friday/)
+
 ## Prerequisites
 
 * Docker Engine version >= 19.03
@@ -62,12 +65,21 @@ $ cd scripts
 $ ./install_docker-compse.sh
 ```
 
+### attendance_check service
+
+* Support HTML5 MediaDevices API
+  * https://developer.mozilla.org/en-US/docs/Web/API/MediaDevices
+
 ## Technique Used
 
 ### front-end
 
+ 0. common 
  -  Flask
  -  SQLAlchemy
+
+ 1. attendance_check
+ - [JsQRScanner](https://github.com/jbialobr/JsQRScanner) : qr scanner on website
 
 ### Database
 
@@ -76,23 +88,52 @@ $ ./install_docker-compse.sh
 ### Load balancer
 
  - HA Proxy
+ - Read / Write Splitting : Before query switch uri that binds SQLAlchemy Object
+   - with [adhorn's script](https://gist.github.com/adhorn/b84dc47175259992d406) 
 
 ## Installation Process
 
-1. Compose Database
+1-1. Compose Database ( at INFRA_FRIDAY )
 
 IF you use wsl or codespace, checkout branch to wsl or codespace
 
 ```bash
 $ cd database
 $ docker-compose up -d --build
-# Load Database Scheme
-$ docker exec -i main_master_db mysql -u dbmanager -piris friday < friday.sql
+```
+
+1-2. Compose Database ( at Web_FRIDAY )
+
+```bash
+$ cd scripts
+$ ./run_infra.sh
+```
+
+2. Run Attendance Check app ( at Web_FRIDAY )
+
+```bash
+$ cd attendance_check
+$ docker-compose up -d --build
 ```
 
 ## Getting Started
 
-- Further scheduled
+### attendance_check
+> Check the actual number of people who ate.
+
+First, We need to give them a QR Code that include there id
+
+and then bring device that has camera and follow below steps
+
+This service auto check time on device, so you have to check the device time is correct
+
+![qr_scanned_screen](/res/screenshot/check_screen.jpg?raw=true)
+
+1. go to Endpoint ( ```url/qr/scan```) at Web Browser
+
+2. Show QR at rear camera
+
+3. wait 5~10 sec, check your id on screen
 
 ## Team Information
 
@@ -116,3 +157,11 @@ distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
 WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 License for the specific language governing permissions and limitations under
 the License.
+
+---
+
+JsQRScanner
+
+https://github.com/jbialobr/JsQRScanner
+
+Apache License 2.0
