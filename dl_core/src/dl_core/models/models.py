@@ -32,13 +32,6 @@ t_daily_menu = db.Table(
     db.Column('menu_id', db.ForeignKey('menu_info.id', ondelete='RESTRICT', onupdate='RESTRICT'), nullable=False, info='메뉴 인덱스')
 )
 
-class RegisterCode(db.Model):
-    __tablename__ = 'register_code'
-
-    id = db.Column(db.Integer, primary_key=True, info='인덱스')
-    code = db.Column(db.String(20), nullable=False, info='등록 코드')
-    # 추후에 기간 항목을 수정해도 좋을 것 같음.
-
 class MenuInfo(db.Model):
     __tablename__ = 'menu_info'
 
@@ -104,16 +97,14 @@ class SpecialEvent(DateMealtimeMapping):
     is_positive = db.Column(db.Boolean, nullable=False, info='긍정 이벤트 ( 특식, 복날, 훈련 등 식수 증가 )')
     is_negative = db.Column(db.Boolean, nullable=False, info='부정 이벤트 ( 외부기관 훈련 )')
 
-
-
 class GroupList(db.Model):
     __tablename__ = 'group_list'
 
     id = db.Column(db.Integer, primary_key=True, info='인덱스')
     name = db.Column(db.String(45), nullable=False, unique=True, info='집단 이름')
-    supply_id = db.Column(db.ForeignKey('supply_list.id', ondelete='RESTRICT', onupdate='RESTRICT'), index=True, info='배식소 인덱스')
+    cafeteria_id = db.Column(db.ForeignKey('cafeteria_list.id', ondelete='RESTRICT', onupdate='RESTRICT'), index=True, info='배식소 인덱스')
 
-    supply = db.relationship('SupplyList', primaryjoin='GroupList.supply_id == SupplyList.id', backref='group_lists')
+    cafeteria = db.relationship('CafeteriaList', primaryjoin='GroupList.supply_id == CafeteriaList.id', backref='group_lists')
 
 
 
@@ -127,20 +118,24 @@ class GroupMemberInfo(db.Model):
 
     group = db.relationship('GroupList', primaryjoin='GroupMemberInfo.group_id == GroupList.id', backref='group_member_infos')
 
-
-class Account(GroupMemberInfo):
+class Account(db.Model):
     __tablename__ = 'accounts'
 
-    member_id = db.Column(db.ForeignKey('group_member_info.id', ondelete='RESTRICT', onupdate='RESTRICT'), primary_key=True, info='구성원 인덱스')
-    group_id = db.Column(db.ForeignKey('group_list.id', ondelete='RESTRICT', onupdate='RESTRICT'), nullable=False, index=True, info='집단 인덱스')
-    password = db.Column(db.String(128), nullable=False, info='비밀 번호 (sha3-512 해싱 )')
+    id = db.Column(db.Integer, primary_key=True, info='인덱스')
+    chat_id = db.Column(db.Integer, unique=True, info='ID역할을 할 chat_id')
+    name = db.Column(db.String(45), nullable=False, info='멤버 이름')
+    cafeteria = db.Column(db.String(45), nullable=False, info='구내식당 이름 [ (군) 급양대 이름 ]')
+    password = db.Column(db.String(128), nullable=False, info='비밀 번호 (sha3-512 해싱 예정 )')
 
-    group = db.relationship('GroupList', primaryjoin='Account.group_id == GroupList.id', backref='accounts')
-
-
-
-class SupplyList(db.Model):
-    __tablename__ = 'supply_list'
+class CafeteriaList(db.Model):
+    __tablename__ = 'cafeteria_list'
 
     id = db.Column(db.Integer, primary_key=True, info='인덱스')
-    name = db.Column(db.String(45), nullable=False, info='배식소 이름 [ (군) 급양대 이름 ]')
+    name = db.Column(db.String(45), nullable=False, info='구내식당 이름 [ (군) 급양대 이름 ]')
+
+class RegisterCode(db.Model):
+ 
+    __tablename__ = 'register_code'
+ 
+    id       = db.Column(db.Integer, primary_key=True)
+    code     = db.Column(db.String(20), nullable=False, info='등록 코드')
