@@ -5,12 +5,15 @@ mysql_config = {
 	'pass': 'iris',
 	'db': 'friday'
 }
-
-def get_alchemy_uri(mode='read'):
-    // TODO: 3307 / 3306 으로 분기 시킬 방안 구상
-    // 1. rodb / rwdb
-    // 2. 실시간으로 uri만 바꾸는 방법이 있을까?
-    port = 3306 if mode == 'read' else 3306 
+RPORT = 3307
+WPORT = 3306
+def get_alchemy_uri():
+    # Default : Write => For Migration
     return 'mysql+pymysql://%s:%s@%s:%s/%s?charset=utf8' % (
-            mysql_config['user'], mysql_config['pass'], mysql_config['host'], port, mysql_config['db']
+            mysql_config['user'], mysql_config['pass'], mysql_config['host'], WPORT, mysql_config['db']
     )
+
+SQLALCHEMY_BINDS = {
+  'master': 'mysql+pymysql://{}:{}@{}:{}/{}?charset=utf8'.format(mysql_config['user'], mysql_config['pass'], mysql_config['host'], WPORT, mysql_config['db']),
+  'slave': 'mysql+pymysql://{}:{}@{}:{}/{}?charset=utf8'.format(mysql_config['user'], mysql_config['pass'], mysql_config['host'], RPORT, mysql_config['db'])
+}

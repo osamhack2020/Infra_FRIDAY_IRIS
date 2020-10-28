@@ -1,8 +1,24 @@
 # coding: utf-8
-from attendance_check import db
-
-def init_scheme():
+from dl_core import db
+import sqlalchemy.exc as SA
+def init_db():
     db.create_all()
+# Lost connection 문제를 해결하기 위해 exception시 자동으로 다시 시도 구현
+# attempts 수치를 조절할 필요는 있다.
+def run_query(f, params=(), attempts=4, slave=False):
+    while attempts > 0:
+        attempts -= 1
+        try:
+            # "break" if query was successful and return any results
+            return f(*params) 
+        except SA.DBAPIError as exc:
+            if attempts > 0 and exc.connection_invalidated:
+                if not slave:
+                    db.session.using_bind("master").rollback()
+                else:
+                    db.session.using_bind("slave").rollback()
+            else:
+                raise
 
 t_daily_eat_log = db.Table(
     'daily_eat_log',
@@ -10,25 +26,27 @@ t_daily_eat_log = db.Table(
     db.Column('member_id', db.ForeignKey('group_member_info.id', ondelete='RESTRICT', onupdate='RESTRICT'), nullable=False, index=True, info='구성원 고유 번호 [ 예) 군번 / 순번 ]')
 )
 
-class DailyMenu(db.Model):
-    __tablename__ = 'daily_menu'
+t_daily_menu = db.Table(
+    'daily_menu',
+    db.Column('date_id', db.ForeignKey('date_mealtime_mapping.id', ondelete='RESTRICT', onupdate='RESTRICT'), nullable=False, index=True, info='날짜 인덱스'),
+    db.Column('menu_id', db.ForeignKey('menu_info.id', ondelete='RESTRICT', onupdate='RESTRICT'), nullable=False, info='메뉴 인덱스')
+)
+
+class RegisterCode(db.Model):
+    __tablename__ = 'register_code'
 
     id = db.Column(db.Integer, primary_key=True, info='인덱스')
-    date_id = db.Column(db.ForeignKey('date_mealtime_mapping.id', ondelete='RESTRICT', onupdate='RESTRICT'), nullable=False, index=True, info='날짜 인덱스')
-    menu = db.Column(db.String(45), nullable=False, info='메뉴')
+    code = db.Column(db.String(20), nullable=False, info='등록 코드')
+    # 추후에 기간 항목을 수정해도 좋을 것 같음.
 
-    date = db.relationship('DateMealtimeMapping', primaryjoin='DailyMenu.date_id == DateMealtimeMapping.id', backref='daily_menus')
-
-
-class MenuInfo(DailyMenu):
+class MenuInfo(db.Model):
     __tablename__ = 'menu_info'
 
-    menu_id = db.Column(db.ForeignKey('daily_menu.id', ondelete='RESTRICT', onupdate='RESTRICT'), primary_key=True, info='메뉴 인덱스')
+    id = db.Column(db.Integer, primary_key=True, info='메뉴 인덱스')
+    menu_name = db.Column(db.String(45), nullable=False, info='메뉴 이름')
     meal_type = db.Column(db.String(45), nullable=False, info='메뉴 종류 ( 주식 / 밑 반찬 / 후식 )')
     cooking_method = db.Column(db.String(45), nullable=False, info='조리 방법 ( 대 분류 )')
-    ingredient = db.Column(db.String(45), nullable=False, info='조리 재료 ( 중분류 )')
-
-
+    ingredient = db.Column(db.String(66), nullable=True, info='조리 재료 ( 중분류 )') # sum(all) * 3(hangul) / 2 (not all) , 대분류에서 끝나는 경우가 있어서 null가능 처리 
 
 class DateMealtimeMapping(db.Model):
     __tablename__ = 'date_mealtime_mapping'

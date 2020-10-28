@@ -1,4 +1,5 @@
 from calendar import monthrange
+from datetime import datetime
 import json
 import requests as req
 from dl_core.secret import key
@@ -120,3 +121,22 @@ def get_month_data(year, month):
     month_data["body"] = days_data
     return month_data
 
+def down_data():
+    now = datetime.now()
+    date = now.strftime("%Y%m%d")
+    h = now.hour
+    URL = "http://apis.data.go.kr/1360000/VilageFcstInfoService/getUltraSrtNcst"
+    date = {
+        'ServiceKey':key,
+        'pageNo':1,
+        'numOfRows':24,
+        'dataType':'JSON',
+        'base_date':date,
+        'base_time':'%02d' % int(h)+'00',
+        'nx':55,
+        'ny':76
+    }
+    res = req.get(URL, params=date)
+    weather_dict = json.loads(res.text)
+    dummy = weather_dict['response']['body']['items']['item']
+    return {d['category']:d['obsrValue'] for d in dummy}

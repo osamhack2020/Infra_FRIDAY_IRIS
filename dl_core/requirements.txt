@@ -1,15 +1,22 @@
+# common
+cryptography
+# DeepLearning
 numpy
 scipy
+scikit-learn
+# Connection
 requests
+pymysql
+mysqlclient
+# Data Processing
 beautifulsoup4
 xmltodict
-scikit-learn
-pymysql
 pandas
+# Middleware
 uwsgi
+# Web Framework
 Flask
 flask_sqlalchemy
-mysqlclient
 Flask-Migrate
 flask_script
-cryptography
+Flask-APScheduler # scheduler
