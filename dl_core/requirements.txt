@@ -19,4 +19,5 @@ Flask
 flask_sqlalchemy
 Flask-Migrate
 flask_script
-Flask-APScheduler # scheduler
+Flask-APScheduler
+# scheduler

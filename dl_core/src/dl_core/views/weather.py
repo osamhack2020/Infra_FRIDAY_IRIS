@@ -4,6 +4,8 @@ import json
 from dl_core.views.kma import get_normal_data, get_month_data
 weather = Blueprint('weather', __name__, url_prefix='/weather')
 
+# 그러고보니 동네예보 좌표 받아야 함 ㅋㅋㅋ
+# 위치정보 리스트내에 받게 만들까?
 @weather.route('/<date>', methods=['GET'])
 def get_target_weather_data(date):
     res = json.dumps(get_normal_data(date))

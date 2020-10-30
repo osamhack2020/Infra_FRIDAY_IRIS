@@ -3,6 +3,16 @@ from dl_core import db
 import sqlalchemy.exc as SA
 def init_db():
     db.create_all()
+def _already_exist(db_model, obj, data):
+    row = db.session.using_bind("slave").query(db_model).filter(obj == data).first()
+    if row:
+        return True
+    else:
+        return False
+
+def already_exist(db_model, obj, data):
+    return run_query(_already_exist, (db_model, obj, data))
+
 # Lost connection 문제를 해결하기 위해 exception시 자동으로 다시 시도 구현
 # attempts 수치를 조절할 필요는 있다.
 def run_query(f, params=(), attempts=4, slave=False):
@@ -31,6 +41,20 @@ t_daily_menu = db.Table(
     db.Column('date_id', db.ForeignKey('date_mealtime_mapping.id', ondelete='RESTRICT', onupdate='RESTRICT'), nullable=False, index=True, info='날짜 인덱스'),
     db.Column('menu_id', db.ForeignKey('menu_info.id', ondelete='RESTRICT', onupdate='RESTRICT'), nullable=False, info='메뉴 인덱스')
 )
+class DailyWeather(db.Model):
+    id = db.Column(db.Integer, primary_key=True, info='데이터 인덱스')
+    date = db.Column(db.Date, nullable=False, info='날짜(20200101)')
+    h = db.Column(db.Integer, nullable=False)
+    t = db.Column(db.Float, nullable=False)
+    hm = db.Column(db.Integer, nullable=False)
+    ws = db.Column(db.Float, nullable=False)
+    rain = db.Column(db.Boolean, nullable=False, info='비')
+    snow = db.Column(db.Boolean, nullable=False, info='눈')
+
+class FitData(db.Model):
+    id = db.Column(db.Integer, primary_key=True, info='데이터 인덱스')
+    serial = db.Column(db.Text, nullable=False)
+    token_len = db.Column(db.Integer, nullable=False)
 
 class MenuInfo(db.Model):
     __tablename__ = 'menu_info'
@@ -47,8 +71,6 @@ class DateMealtimeMapping(db.Model):
     id = db.Column(db.Integer, primary_key=True, info='인덱스')
     korean_date = db.Column(db.Date, nullable=False, info='날짜(20200101)')
     meal_time = db.Column(db.Enum('breakfast', 'lunch', 'dinner'), nullable=False, info='식사시간 ( 1~3 : 아침, 점심, 저녁 )')
-    members = db.relationship('Account', secondary='daily_eat_log', backref='date_mealtime_mappings')
-
 
 class DailyHeadcount(DateMealtimeMapping):
     __tablename__ = 'daily_headcount'
@@ -56,7 +78,6 @@ class DailyHeadcount(DateMealtimeMapping):
     date_id = db.Column(db.ForeignKey('date_mealtime_mapping.id', ondelete='RESTRICT', onupdate='RESTRICT'), primary_key=True, info='날짜 인덱스')
     official_count = db.Column(db.SmallInteger, nullable=False, info='식사 가능 인원 수')
     real_count = db.Column(db.SmallInteger, info='실제 식사 인원 수')
-
 
 class DailyHolidayCheck(DateMealtimeMapping):
     __tablename__ = 'daily_holiday_check'
@@ -69,44 +90,12 @@ class DailyHolidayCheck(DateMealtimeMapping):
     after_long_weekend = db.Column(db.Boolean, nullable=False, info='연휴 ( 3일 이상 ) 다음날 여부')
     in_end_year = db.Column(db.Boolean, nullable=False, info='연말 ( 12 /  21~31 ) 여부')
 
-
-class DailyWeatherInfo(DateMealtimeMapping):
-    __tablename__ = 'daily_weather_info'
-
-    date_id = db.Column(db.ForeignKey('date_mealtime_mapping.id', ondelete='RESTRICT', onupdate='RESTRICT'), primary_key=True, info='날짜 인덱스')
-    is_abnormal_temperature = db.Column(db.Boolean, nullable=False, info='이상 기온 여부')
-    is_heat_wave = db.Column(db.Boolean, nullable=False, info='폭염 여부')
-    snow = db.Column(db.Boolean, nullable=False, info='눈 (  진눈깨비 비포함 )')
-    rain = db.Column(db.Boolean, nullable=False, info='비 ( 진눈깨비 포함 )')
-    discomfort_index = db.Column(db.Enum('low', 'normal', 'high', 'very high'), nullable=False, info='불퀘지수')
-    cloudy = db.Column(db.Enum('clear', 'little cloudy', 'cloudy', 'grey'), nullable=False, info='흐림 여부')
-    wind_chill_temperature = db.Column(db.Integer, nullable=False, info='체감 온도')
-
-
-class PredictLog(DateMealtimeMapping):
-    __tablename__ = 'predict_log'
-
-    date_id = db.Column(db.ForeignKey('date_mealtime_mapping.id', ondelete='RESTRICT', onupdate='RESTRICT'), primary_key=True, info='날짜 인덱스')
-    predict_real_count = db.Column(db.SmallInteger, nullable=False, info='예측한 실 식수 인원')
-
-
-class SpecialEvent(DateMealtimeMapping):
-    __tablename__ = 'special_event'
-
-    date_id = db.Column(db.ForeignKey('date_mealtime_mapping.id', ondelete='RESTRICT', onupdate='RESTRICT'), primary_key=True, info='날짜 인덱스')
-    is_positive = db.Column(db.Boolean, nullable=False, info='긍정 이벤트 ( 특식, 복날, 훈련 등 식수 증가 )')
-    is_negative = db.Column(db.Boolean, nullable=False, info='부정 이벤트 ( 외부기관 훈련 )')
-
 class GroupList(db.Model):
     __tablename__ = 'group_list'
 
     id = db.Column(db.Integer, primary_key=True, info='인덱스')
     name = db.Column(db.String(45), nullable=False, unique=True, info='집단 이름')
     cafeteria_id = db.Column(db.ForeignKey('cafeteria_list.id', ondelete='RESTRICT', onupdate='RESTRICT'), index=True, info='배식소 인덱스')
-
-    cafeteria = db.relationship('CafeteriaList', primaryjoin='GroupList.supply_id == CafeteriaList.id', backref='group_lists')
-
-
 
 class GroupMemberInfo(db.Model):
     __tablename__ = 'group_member_info'
@@ -134,8 +123,14 @@ class CafeteriaList(db.Model):
     name = db.Column(db.String(45), nullable=False, info='구내식당 이름 [ (군) 급양대 이름 ]')
 
 class RegisterCode(db.Model):
- 
     __tablename__ = 'register_code'
  
     id       = db.Column(db.Integer, primary_key=True)
     code     = db.Column(db.String(20), nullable=False, info='등록 코드')
+
+class MemberChatIdMapping(db.Model):
+    __tablename__ = 'member_chat_id_map'
+
+    id = db.Column(db.Integer, primary_key=True)
+    member_id = db.Column(db.ForeignKey('group_member_info.id', ondelete='RESTRICT', onupdate='RESTRICT'), nullable=False, index=True, info='멤버 인덱스')
+    chat_id = db.Column(db.Integer, nullable=False, info='채팅방 고유번호')

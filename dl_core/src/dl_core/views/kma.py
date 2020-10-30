@@ -3,6 +3,8 @@ from datetime import datetime
 import json
 import requests as req
 from dl_core.secret import key
+
+rs = ["None", "Rain", "Both", "Snow", "Rain", "Rain", "Both","Snow"]
 #
 # ta : 온도, ws : 풍속, hm : 습도
 # cloud : 구름 양, rain : 강수량, snow : 적설량 
@@ -121,13 +123,12 @@ def get_month_data(year, month):
     month_data["body"] = days_data
     return month_data
 
-def down_data():
-    now = datetime.now()
-    date = now.strftime("%Y%m%d")
-    h = now.hour
+def down_data(target_date:str):
+    date, h = target_date.split() # 20201025 11
+    # 해당 시 40분 이후에야 해당 시 조회가능 점 예외처리 ㄱ
     URL = "http://apis.data.go.kr/1360000/VilageFcstInfoService/getUltraSrtNcst"
     date = {
-        'ServiceKey':key,
+        'serviceKey':key,
         'pageNo':1,
         'numOfRows':24,
         'dataType':'JSON',
@@ -140,3 +141,21 @@ def down_data():
     weather_dict = json.loads(res.text)
     dummy = weather_dict['response']['body']['items']['item']
     return {d['category']:d['obsrValue'] for d in dummy}
+
+def basic_parse(target_date, kma_dict):
+    date, h = target_date.split() # 20201025 11
+    parse_data = {}
+    rs_code = rs[int(kma_dict["PTY"])]
+    parse_data["rain"] = parse_data["snow"] = 0
+    if rs_code == "Both":
+        parse_data["rain"] = parse_data["snow"] = 1
+    elif rs_code == "None":
+        pass
+    else:
+        parse_data[rs_code.lower()] = 1
+    parse_data["date"] = date
+    parse_data["h"] = int(h)
+    parse_data["t"] = kma_dict["T1H"]
+    parse_data["hm"] = kma_dict["REH"]
+    parse_data["ws"] = kma_dict["WSD"]
+    return parse_data
