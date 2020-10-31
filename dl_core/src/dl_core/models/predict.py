@@ -1,5 +1,5 @@
 from dl_core import db
-from dl_core.models.models import run_query, FitData
+from dl_core.models.models import run_query, FitData, RealHeadcount
 def get_fit_len() ->  int:
     len = db.session.using_bind("slave").query(FitData).count()
     if len:
@@ -7,11 +7,11 @@ def get_fit_len() ->  int:
     else:
         return -1
 
-
 def find_len():
     l = run_query(get_fit_len)
     if l != -1:
         return l
+    return -1
 
 def _insert_fit_data(serial:str, token_len:int):
     new_sheet = FitData(serial=serial, token_len=token_len)
@@ -32,6 +32,21 @@ def get_all_fit_data() ->  list:
 
 def get_fit_data_list() -> list:
     l = run_query(get_all_fit_data)
+    if l:
+        return l
+    else:
+        return []
+
+def get_all_real_headcount():
+    rows = db.session.using_bind("slave").query(RealHeadcount).all()
+    if rows:
+        l = [ r.date_id for r in rows ]
+        return l
+    else:
+        return []
+
+def get_real_headcount_list():
+    l = run_query(get_all_real_headcount)
     if l:
         return l
     else:

@@ -1,8 +1,10 @@
 import json
-from flask import Blueprint
+from flask import Blueprint, request
 from datetime import datetime
 from calendar import monthrange
-from dl_core.models.predict import find_len, insert_fit_data, get_fit_data_list
+from dl_core.models.predict import find_len, insert_fit_data, get_fit_data_list, get_real_headcount_list
+from dl_core.models.kma import exist_weather
+from dl_core.models.menuinfo import exist_menu
 from dl_core.secret import key
 from dl_core.views.holiday import check_day_full
 import pandas as pd
@@ -88,7 +90,6 @@ from sklearn.linear_model import LinearRegression
 # my_apartment = [[1, 1, 620, 16, 1, 98, 1, 0, 1, 0, 0, 1, 1, 0]]
 # my_predict = mlr.predict(my_apartment)
 serial_keys = [
-    "additional_h", # 추가적인 휴일 ( 전투 휴무 등 )
     "is_h",
     "before_h",
     "after_h",
@@ -167,15 +168,26 @@ def push_fit_data():
     serial = serialize(fit_data_dict)
     insert_fit_data(serial, token_len)
 
+def get_fitable_len():
+    l = get_real_headcount_list()
+    count = 0
+    for date_id in l:
+        if exist_weather(date_id):
+            if exist_menu(date_id):
+                count += 1
+    return count
+
 @predict.route('/', methods=['GET'])
 def _predict():
+    # is_additional_h = request.args.get('additional_h') # int : 1, 0
     # len 이 똑같아야 하니까 기준은 아마 date_mealtime_mapping 얘가 될듯
     # sample 하나 이상 필요
-    if get_fit_len < 2:
-        return json.dumps({"status":"error", "msg":"딥러닝에 쓸 데이터가 부족합니다"})
+    if get_fit_len() < 2:
+        if get_fitable_len() < 2:
+            return json.dumps({"msg":"딥러닝에 쓸 데이터가 부족합니다"}, ensure_ascii=False), 200
     fit_data_list = get_fit_data_list()
     today = datetime.today().strftime("%Y%m%d")
-    day_info, _ = check_day_full(today)
+    # day_info, _ = check_day_full(today)
     
-    return day_info, 200
+    # return day_info, 200
 

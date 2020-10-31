@@ -39,9 +39,18 @@ t_daily_eat_log = db.Table(
 t_daily_menu = db.Table(
     'daily_menu',
     db.Column('date_id', db.ForeignKey('date_mealtime_mapping.id', ondelete='RESTRICT', onupdate='RESTRICT'), nullable=False, index=True, info='날짜 인덱스'),
+    db.Column('cafeteria_id', db.ForeignKey('cafeteria_list.id', ondelete='RESTRICT', onupdate='RESTRICT'), nullable=False, info='식당 인덱스'),
     db.Column('menu_id', db.ForeignKey('menu_info.id', ondelete='RESTRICT', onupdate='RESTRICT'), nullable=False, info='메뉴 인덱스')
 )
+class RealHeadcount(db.Model):
+    __tablename__ = 'real_headcount'
+    id = db.Column(db.Integer, primary_key=True, info='데이터 인덱스')
+    date_id = db.Column(db.ForeignKey('date_mealtime_mapping.id', ondelete='RESTRICT', onupdate='RESTRICT'), nullable=False, info='날짜 인덱스')
+    n = db.Column(db.Integer, nullable=False, info="실 식수인원 수")
+
 class DailyWeather(db.Model):
+
+    __tablename__ = 'daily_weather'
     id = db.Column(db.Integer, primary_key=True, info='데이터 인덱스')
     date = db.Column(db.Date, nullable=False, info='날짜(20200101)')
     h = db.Column(db.Integer, nullable=False)
@@ -52,6 +61,7 @@ class DailyWeather(db.Model):
     snow = db.Column(db.Boolean, nullable=False, info='눈')
 
 class FitData(db.Model):
+    __tablename__ = 'fit_data'
     id = db.Column(db.Integer, primary_key=True, info='데이터 인덱스')
     serial = db.Column(db.Text, nullable=False)
     token_len = db.Column(db.Integer, nullable=False)
@@ -61,9 +71,7 @@ class MenuInfo(db.Model):
 
     id = db.Column(db.Integer, primary_key=True, info='메뉴 인덱스')
     menu_name = db.Column(db.String(45), nullable=False, info='메뉴 이름')
-    meal_type = db.Column(db.String(45), nullable=False, info='메뉴 종류 ( 주식 / 밑 반찬 / 후식 )')
-    cooking_method = db.Column(db.String(45), nullable=False, info='조리 방법 ( 대 분류 )')
-    ingredient = db.Column(db.String(66), nullable=True, info='조리 재료 ( 중분류 )') # sum(all) * 3(hangul) / 2 (not all) , 대분류에서 끝나는 경우가 있어서 null가능 처리 
+    info_serial = db.Column(db.Text, nullable=False, info='예) "구이류,튀김류" 이런 방식으로 데이터 저장')
 
 class DateMealtimeMapping(db.Model):
     __tablename__ = 'date_mealtime_mapping'
