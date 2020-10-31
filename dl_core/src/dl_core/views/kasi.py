@@ -4,7 +4,9 @@ from dl_core.secret import key
 from datetime import datetime
 import requests as req
 from calendar import monthrange, monthcalendar
-
+from dl_core import app
+from time import sleep
+from dl_core.models.predict import get_holiday_from_db, db_exist, insert_holiday_tbl
 # beautify parsed by xmltodict
 def beautify(dirty_dict):
     return json.loads(json.dumps(dirty_dict))
@@ -12,6 +14,10 @@ def beautify(dirty_dict):
 # return tuple (days_of_month, parsed_data)
 backup = {}
 def get_holiday_tbl(y, m):
+    if db_exist(y, m):
+        ml, hlist = get_holiday_from_db(y, m)
+        return ml, hlist
+    app.logger.info("====={0} {1}=====".format(y, m))
     if "%s_%s" % (y, m) in backup:
         return backup["%s_%s" % (y, m)]
     _, ml = monthrange(y, m)
@@ -23,6 +29,7 @@ def get_holiday_tbl(y, m):
         'solMonth': "%02d" % m
     }
     res = req.get(URL, params=params)
+    app.logger.info(res.text)
     dummy = beautify(xmltodict.parse(res.text))[
         'response']['body']
     if not int(dummy['totalCount']):
@@ -42,6 +49,7 @@ def get_holiday_tbl(y, m):
                 hlist.append(d_id) if d_id not in hlist else hlist
     tbl = [1 if i in hlist else 0 for i in range(1, ml+1)]
     backup["%s_%s" % (y, m)] = (ml,tbl)
+    insert_holiday_tbl(tbl, y, m)
     return ml, tbl
 
 # date:datetime obj

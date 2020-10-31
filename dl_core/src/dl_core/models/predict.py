@@ -1,5 +1,6 @@
 from dl_core import db
-from dl_core.models.models import run_query, FitData, RealHeadcount
+from dl_core.models.models import run_query, FitData, RealHeadcount, DateMealtimeMapping, MonthHoliday
+from datetime import datetime
 def get_fit_len() ->  int:
     len = db.session.using_bind("slave").query(FitData).count()
     if len:
@@ -51,3 +52,57 @@ def get_real_headcount_list():
         return l
     else:
         return []
+
+def find_datestr_at_id(date_id):
+    row = db.session.using_bind("slave").query(DateMealtimeMapping).filter_by(id=date_id).first()
+    if row:
+        return row.korean_date
+    else:
+        return ''
+
+def get_datetime_from_id(date_id):
+    return run_query(find_datestr_at_id, ([date_id]))
+
+def _get_real_headcount(date_id):
+    row = db.session.using_bind("slave").query(RealHeadcount).filter_by(date_id=date_id).first()
+    if row:
+        return row.n
+    else:
+        return -1
+
+def get_real_headcount(date_id):
+    n = run_query(_get_real_headcount, ([date_id]))
+    if n != -1:
+        return n
+
+def _db_exist(y, m):
+    cnt = db.session.using_bind("slave").query(MonthHoliday).filter_by(y=y, m=m).count()
+    if cnt:
+        return True
+    else:
+        return False
+
+def db_exist(y, m):
+    return run_query(_db_exist, (y, m))
+
+def parse_holiday_table(y, m):
+    row = db.session.using_bind("slave").query(MonthHoliday).filter_by(y=y, m=m).first()
+    if row:
+        return row.token_len, row.serial.split(",")
+    else:
+        return -1, []
+
+def get_holiday_from_db(y ,m):
+    ml, tbl = run_query(parse_holiday_table, (y, m))
+    return ml, tbl
+
+def push_holiday_tbl(serial, token_len, y, m):
+    new_htbl = MonthHoliday(serial=serial, token_len=token_len, y=y, m=m)
+    sess = db.session.using_bind("master")
+    sess.add(new_htbl)
+    sess.commit()
+    
+def insert_holiday_tbl(tbl, y, m):
+    token_len = len(tbl)
+    serial = ",".join(tbl)
+    run_query(push_holiday_tbl, (serial, token_len, y, m))

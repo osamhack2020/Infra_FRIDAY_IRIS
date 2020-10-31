@@ -60,6 +60,16 @@ class DailyWeather(db.Model):
     rain = db.Column(db.Boolean, nullable=False, info='비')
     snow = db.Column(db.Boolean, nullable=False, info='눈')
 
+class MonthHoliday(db.Model):
+
+    __tablename__ = 'month_holiday'
+
+    id = db.Column(db.Integer, primary_key=True, info='데이터 인덱스')
+    serial = db.Column(db.Text, nullable=False)
+    token_len = db.Column(db.Integer, nullable=False)
+    y = db.Column(db.Integer, nullable=False)
+    m = db.Column(db.Integer, nullable=False)
+    
 class FitData(db.Model):
     __tablename__ = 'fit_data'
     id = db.Column(db.Integer, primary_key=True, info='데이터 인덱스')
