@@ -134,7 +134,7 @@ $ docker-compose up -d --build
 
 ## 팀 정보 (Team Information)
 
-- Pyo Sehun (kimpyo9357@naver.com), Github Id: kohari0912
+- Pyo Sehun (kimpyo9357@naver.com), Github Id: kimpyo9357
 - Jeong Deokho (duckhoim@naver.com), Github Id: l0vey0u
 
 ## 저작권 및 사용권 정보 (Copyleft / End User License)
