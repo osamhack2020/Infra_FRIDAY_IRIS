@@ -137,7 +137,7 @@ This service auto check time on device, so you have to check the device time is 
 
 ## Team Information
 
-- Pyo Sehun (kimpyo9357@naver.com), Github Id: kohari0912
+- Pyo Sehun (kimpyo9357@naver.com), Github Id: kimpyo9357
 - Jeong Deokho (duckhoim@naver.com), Github Id: l0vey0u
 
 ## Copyleft / End User License
